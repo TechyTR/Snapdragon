@@ -8,6 +8,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -29,6 +30,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -98,7 +101,7 @@ private fun HomePage(
                 Text("DEVICE CONTROL CENTER", fontSize = 9.sp, letterSpacing = 1.4.sp, color = Muted)
             }
             Box(Modifier.clip(CircleShape).background(Color(0xFF202A35)).border(1.dp, Color(0xFF394858), CircleShape).padding(horizontal = 11.dp, vertical = 7.dp)) {
-                Text("FAN-MADE", fontSize = 8.sp, fontWeight = FontWeight.Bold, color = Muted, letterSpacing = 0.8.sp)
+                Text("v1.0", fontSize = 8.sp, fontWeight = FontWeight.Bold, color = Muted, letterSpacing = 0.8.sp)
             }
         }
         ProcessorOverview(onOpenDevice, onOpenPanel)
@@ -117,7 +120,6 @@ private fun HomePage(
         ActionCard("Yüzen oyun paneli", "Hızlı araçlar, oyun kısayolları ve kontrol merkezi", Icons.Rounded.Gamepad, Cyan, onOpenPanel)
         ActionCard("Cihaz laboratuvarı", "Bellek, işlemci ve Android bilgilerini incele", Icons.Rounded.Memory, Purple, onOpenDevice)
         ActionCard("Uygulama tetikleyicileri", "Panelin çalışacağı oyunları ve uygulamaları seç", Icons.Rounded.Apps, Blue, onOpenApps)
-        Text("Snapdragon, Qualcomm Technologies, Inc. markasıdır. Bu uygulama bağımsız bir hayran projesidir; Qualcomm tarafından yayımlanmamış veya onaylanmamıştır. Bazı kontrol seçenekleri henüz görsel önizlemedir.", Modifier.fillMaxWidth().padding(top = 2.dp, bottom = 12.dp), textAlign = TextAlign.Start, fontSize = 10.sp, lineHeight = 15.sp, color = Color(0xFF728196))
     }
 }
 
@@ -159,7 +161,11 @@ private fun ProcessorOverview(onOpenDevice: () -> Unit, onOpenPanel: () -> Unit)
                     Text(Build.MODEL.orEmpty(), color = Muted, fontSize = 12.sp)
                 }
                 Box(Modifier.size(64.dp).clip(RoundedCornerShape(19.dp)).background(Color(0xFF25232A)).border(1.dp, Color(0xFF4A3438), RoundedCornerShape(19.dp)), contentAlignment = Alignment.Center) {
-                    Icon(Icons.Rounded.Memory, null, tint = AccentRed, modifier = Modifier.size(34.dp))
+                    if (chip.contains("Snapdragon 8 Elite", ignoreCase = true)) {
+                        Image(painter = painterResource(id = R.drawable.snapdragon8elite), contentDescription = chip, modifier = Modifier.size(52.dp), contentScale = ContentScale.Fit)
+                    } else {
+                        Icon(Icons.Rounded.Memory, null, tint = AccentRed, modifier = Modifier.size(34.dp))
+                    }
                 }
             }
             HorizontalDivider(color = Color(0xFF2B3543))
@@ -251,7 +257,11 @@ private fun QuickToggle(title: String, icon: ImageVector, checked: Boolean, modi
 private fun MetricCard(title: String, value: String, caption: String, icon: ImageVector, modifier: Modifier) {
     Row(modifier.clip(RoundedCornerShape(22.dp)).background(Brush.linearGradient(listOf(PanelBright, Panel))).border(1.dp, Color(0xFF26364D), RoundedCornerShape(22.dp)).padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.size(38.dp).background(Color(0x2242E8FF), CircleShape), contentAlignment = Alignment.Center) {
-            Icon(icon, null, tint = Cyan, modifier = Modifier.size(20.dp))
+            if (title == "ANDROID" && Build.VERSION.RELEASE == "17") {
+                Image(painter = painterResource(id = R.drawable.android17), contentDescription = "Android 17", modifier = Modifier.size(24.dp), contentScale = ContentScale.Fit)
+            } else {
+                Icon(icon, null, tint = Cyan, modifier = Modifier.size(20.dp))
+            }
         }
         Spacer(Modifier.width(10.dp))
         Column {
