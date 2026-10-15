@@ -1,4 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="snapdragon_accessibility_description">Snapdragon uses app-window change events to activate its floating game panel. It does not read screen text or window contents.</string>
-</resources>

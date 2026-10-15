@@ -2,22 +2,12 @@ package com.nevruz.galaxysnapdragon
 
 import android.app.ActivityManager
 import android.content.Context
-import android.content.Intent
-import android.provider.Settings
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.*
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -39,8 +29,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -74,7 +62,7 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 private fun SnapdragonApp(context: Context) {
-    var page by remember { mutableStateOf(if (needsPermissionSetup(context)) "setup" else "home") }
+    var page by remember { mutableStateOf("home") }
     var gameMode by remember { mutableStateOf(false) }
     var focusMode by remember { mutableStateOf(false) }
     var touchBoost by remember { mutableStateOf(true) }
@@ -83,17 +71,11 @@ private fun SnapdragonApp(context: Context) {
         Box(Modifier.size(280.dp).align(Alignment.TopEnd).drawBehind {
             drawCircle(Brush.radialGradient(listOf(Color(0x263E74FF), Color.Transparent)), radius = size.minDimension * 0.8f)
         })
-        AnimatedContent(targetState = page, transitionSpec = {
-            (fadeIn(tween(240)) + slideInHorizontally(tween(260)) { it / 10 }) togetherWith
-                (fadeOut(tween(150)) + slideOutHorizontally(tween(180)) { -it / 12 })
-        }, label = "pageTransitions") { targetPage ->
-            when (targetPage) {
-                "setup" -> PermissionSetupPage(context, onContinue = { page = "home" })
-                "panel" -> PanelPage({ page = "home" }, gameMode, { gameMode = it }, focusMode, { focusMode = it }, touchBoost, { touchBoost = it })
-                "device" -> DevicePage(context) { page = "home" }
-                "apps" -> AppSelectionPage(context) { page = "home" }
-                else -> HomePage(context, gameMode, { gameMode = it }, focusMode, { focusMode = it }, touchBoost, { page = "panel" }, { page = "device" }, { page = "apps" })
-            }
+        when (page) {
+            "panel" -> PanelPage({ page = "home" }, gameMode, { gameMode = it }, focusMode, { focusMode = it }, touchBoost, { touchBoost = it })
+            "device" -> DevicePage(context) { page = "home" }
+            "apps" -> AppSelectionPage(context) { page = "home" }
+            else -> HomePage(context, gameMode, { gameMode = it }, focusMode, { focusMode = it }, touchBoost, { touchBoost = it }, { page = "panel" }, { page = "device" }, { page = "apps" })
         }
     }
 }
@@ -116,7 +98,7 @@ private fun HomePage(
                 Text("DEVICE CONTROL CENTER", fontSize = 9.sp, letterSpacing = 1.4.sp, color = Muted)
             }
             Box(Modifier.clip(CircleShape).background(Color(0xFF202A35)).border(1.dp, Color(0xFF394858), CircleShape).padding(horizontal = 11.dp, vertical = 7.dp)) {
-                Text("v1.0", fontSize = 8.sp, fontWeight = FontWeight.Bold, color = Muted, letterSpacing = 0.8.sp)
+                Text("FAN-MADE", fontSize = 8.sp, fontWeight = FontWeight.Bold, color = Muted, letterSpacing = 0.8.sp)
             }
         }
         ProcessorOverview(onOpenDevice, onOpenPanel)
@@ -135,6 +117,7 @@ private fun HomePage(
         ActionCard("Yüzen oyun paneli", "Hızlı araçlar, oyun kısayolları ve kontrol merkezi", Icons.Rounded.Gamepad, Cyan, onOpenPanel)
         ActionCard("Cihaz laboratuvarı", "Bellek, işlemci ve Android bilgilerini incele", Icons.Rounded.Memory, Purple, onOpenDevice)
         ActionCard("Uygulama tetikleyicileri", "Panelin çalışacağı oyunları ve uygulamaları seç", Icons.Rounded.Apps, Blue, onOpenApps)
+        Text("Snapdragon, Qualcomm Technologies, Inc. markasıdır. Bu uygulama bağımsız bir hayran projesidir; Qualcomm tarafından yayımlanmamış veya onaylanmamıştır. Bazı kontrol seçenekleri henüz görsel önizlemedir.", Modifier.fillMaxWidth().padding(top = 2.dp, bottom = 12.dp), textAlign = TextAlign.Start, fontSize = 10.sp, lineHeight = 15.sp, color = Color(0xFF728196))
     }
 }
 
@@ -176,11 +159,7 @@ private fun ProcessorOverview(onOpenDevice: () -> Unit, onOpenPanel: () -> Unit)
                     Text(Build.MODEL.orEmpty(), color = Muted, fontSize = 12.sp)
                 }
                 Box(Modifier.size(64.dp).clip(RoundedCornerShape(19.dp)).background(Color(0xFF25232A)).border(1.dp, Color(0xFF4A3438), RoundedCornerShape(19.dp)), contentAlignment = Alignment.Center) {
-                    if (chip.contains("Snapdragon 8 Elite", ignoreCase = true)) {
-                        Image(painter = painterResource(id = R.drawable.snapdragon8elite), contentDescription = chip, modifier = Modifier.size(52.dp), contentScale = ContentScale.Fit)
-                    } else {
-                        Icon(Icons.Rounded.Memory, null, tint = AccentRed, modifier = Modifier.size(34.dp))
-                    }
+                    Icon(Icons.Rounded.Memory, null, tint = AccentRed, modifier = Modifier.size(34.dp))
                 }
             }
             HorizontalDivider(color = Color(0xFF2B3543))
@@ -272,11 +251,7 @@ private fun QuickToggle(title: String, icon: ImageVector, checked: Boolean, modi
 private fun MetricCard(title: String, value: String, caption: String, icon: ImageVector, modifier: Modifier) {
     Row(modifier.clip(RoundedCornerShape(22.dp)).background(Brush.linearGradient(listOf(PanelBright, Panel))).border(1.dp, Color(0xFF26364D), RoundedCornerShape(22.dp)).padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.size(38.dp).background(Color(0x2242E8FF), CircleShape), contentAlignment = Alignment.Center) {
-            if (title == "ANDROID" && Build.VERSION.RELEASE == "17") {
-                Image(painter = painterResource(id = R.drawable.android17), contentDescription = "Android 17", modifier = Modifier.size(24.dp), contentScale = ContentScale.Fit)
-            } else {
-                Icon(icon, null, tint = Cyan, modifier = Modifier.size(20.dp))
-            }
+            Icon(icon, null, tint = Cyan, modifier = Modifier.size(20.dp))
         }
         Spacer(Modifier.width(10.dp))
         Column {
@@ -324,9 +299,9 @@ private fun PanelPage(onBack: () -> Unit, gameMode: Boolean, onGameMode: (Boolea
                     PanelButton("Dokunma+", Icons.Rounded.Speed, touchBoost, Modifier.weight(1f)) { onTouchBoost(!touchBoost) }
                 }
                 Spacer(Modifier.height(18.dp))
-                Text("YÜZEN KONTROLLER", color = Cyan, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                Text("Panel tasarım önizlemesi", color = Cyan, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                 Spacer(Modifier.height(5.dp))
-                Text("Seçtiğin uygulama açılınca ekranın üzerinde panel görünür. Başlığa dokunarak genişlet, başlığı sürükleyerek yerini değiştir.", color = Color(0xFFD0DCF2), fontSize = 11.sp, lineHeight = 17.sp)
+                Text("Bu ekran uygulama içi demodur. Kenardan açılan sistem üstü paneli sonraki aşamada servis ve izinlerle bağlayacağız.", color = Color(0xFFD0DCF2), fontSize = 11.sp, lineHeight = 17.sp)
             }
         }
         SectionLabel("HIZLI ARAÇLAR")
@@ -441,53 +416,6 @@ private fun GlowIcon(icon: ImageVector, modifier: Modifier) {
     }
 }
 
-
-private fun isAccessibilityServiceEnabled(context: Context): Boolean {
-    val expected = context.packageName + "/" + SnapdragonAccessibilityService::class.java.name
-    val enabled = Settings.Secure.getString(context.contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES).orEmpty()
-    return enabled.split(':').any { it.equals(expected, ignoreCase = true) }
-}
-private fun allCorePermissionsGranted(context: Context): Boolean =
-    hasUsageAccess(context) && Settings.canDrawOverlays(context) && isAccessibilityServiceEnabled(context)
-private fun needsPermissionSetup(context: Context): Boolean = !allCorePermissionsGranted(context)
-
-@Composable
-private fun PermissionSetupPage(context: Context, onContinue: () -> Unit) {
-    var refresh by remember { mutableIntStateOf(0) }
-    androidx.compose.runtime.LaunchedEffect(Unit) { while (true) { kotlinx.coroutines.delay(600); refresh++ } }
-    val usage = remember(refresh) { hasUsageAccess(context) }
-    val overlay = remember(refresh) { Settings.canDrawOverlays(context) }
-    val accessibility = remember(refresh) { isAccessibilityServiceEnabled(context) }
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(22.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        Spacer(Modifier.height(16.dp))
-        Text("SNAPDRAGON", color = Cyan, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
-        Text("Cihaz kontrol merkezi", color = White, fontSize = 29.sp, lineHeight = 34.sp, fontWeight = FontWeight.Bold)
-        Text("Yüzen oyun panelini etkinleştirmek için bu izinleri Android ayarlarından aç.", color = Muted, fontSize = 13.sp, lineHeight = 19.sp)
-        PermissionAction("Kullanım erişimi", "Seçili oyunun önde olduğunu algılar.", usage, "AYARLARI AÇ") { context.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)) }
-        PermissionAction("Diğer uygulamaların üzerinde göster", "Paneli oyun ekranının üstünde gösterir.", overlay, "İZİN VER") { context.startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + context.packageName))) }
-        PermissionAction("Snapdragon erişilebilirlik hizmeti", "Pencere geçişlerini algılar; ekran metinlerini okumaz.", accessibility, "ETKİNLEŞTİR") { context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }
-        Button(onClick = { if (usage && overlay && accessibility) onContinue() }, modifier = Modifier.fillMaxWidth().height(54.dp), shape = RoundedCornerShape(14.dp)) {
-            Text(if (usage && overlay && accessibility) "Kurulumu tamamla" else "İzinleri aç, sonra yeniden kontrol et", fontWeight = FontWeight.Bold)
-        }
-        Text("İzinler bu cihazdaki oyun algılama ve yüzen panel için kullanılır.", color = Color(0xFF64748B), fontSize = 10.sp, lineHeight = 15.sp)
-    }
-}
-
-@Composable
-private fun PermissionAction(title: String, description: String, granted: Boolean, actionLabel: String, onClick: () -> Unit) {
-    Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Panel).border(1.dp, if (granted) Color(0xFF367A69) else Color(0xFF334155), RoundedCornerShape(16.dp)).padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-        Column(Modifier.weight(1f)) {
-            Text(title, color = White, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-            Spacer(Modifier.height(4.dp))
-            Text(description, color = Muted, fontSize = 10.sp, lineHeight = 15.sp)
-            Spacer(Modifier.height(6.dp))
-            Text(if (granted) "ETKİN" else "GEREKLİ", color = if (granted) Color(0xFF75D6B0) else AccentRed, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
-        }
-        Spacer(Modifier.width(8.dp))
-        OutlinedButton(onClick = onClick, shape = RoundedCornerShape(10.dp)) { Text(if (granted) "AÇIK" else actionLabel, fontSize = 9.sp) }
-    }
-}
-
 @Composable
 private fun AppSelectionPage(context: Context, onBack: () -> Unit) {
     val prefs = remember { context.getSharedPreferences("snapdragon_settings", Context.MODE_PRIVATE) }
@@ -496,22 +424,19 @@ private fun AppSelectionPage(context: Context, onBack: () -> Unit) {
         val intent = android.content.Intent(android.content.Intent.ACTION_MAIN).addCategory(android.content.Intent.CATEGORY_LAUNCHER)
         context.packageManager.queryIntentActivities(intent, 0).map { it.activityInfo }.filter { it.packageName != context.packageName }.distinctBy { it.packageName }.sortedBy { it.loadLabel(context.packageManager).toString().lowercase() }
     }
-    var permissionRefresh by remember { mutableIntStateOf(0) }
-    androidx.compose.runtime.LaunchedEffect(Unit) { while (true) { kotlinx.coroutines.delay(600); permissionRefresh++ } }
-    val usageGranted = remember(permissionRefresh) { hasUsageAccess(context) }
-    val overlayGranted = remember(permissionRefresh) { Settings.canDrawOverlays(context) }
-    val accessibilityGranted = remember(permissionRefresh) { isAccessibilityServiceEnabled(context) }
+    val usageGranted = remember { hasUsageAccess(context) }
+    val overlayGranted = remember { android.provider.Settings.canDrawOverlays(context) }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         PageHeader("Uygulama seçimi", "OTOMATİK OYUN TETİKLEYİCİSİ", onBack)
         Text("Yalnızca seçtiğin uygulamalar öndeyken Snapdragon bildirimi ve panel tetiklenir.", color = Muted, fontSize = 12.sp, lineHeight = 18.sp)
-        Row(horizontalArrangement = Arrangement.spacedBy(5.dp), modifier = Modifier.fillMaxWidth()) { StatusChip("Kullanım", usageGranted); StatusChip("Üstte göster", overlayGranted); StatusChip("Erişilebilirlik", accessibilityGranted) }
-        PermissionAction("Kullanım erişimi", "Önde çalışan seçili oyunu algılar.", usageGranted, "AYARLARI AÇ") { context.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)) }
-        PermissionAction("Diğer uygulamaların üzerinde göster", "Yüzen paneli oyun ekranının üstünde gösterir.", overlayGranted, "İZİN VER") { context.startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + context.packageName))) }
-        PermissionAction("Snapdragon erişilebilirlik hizmeti", "Uygulama geçişlerini algılar; ekran metinlerini okumaz.", accessibilityGranted, "ETKİNLEŞTİR") { context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) { StatusChip("Kullanım erişimi", usageGranted); StatusChip("Üstte göster", overlayGranted) }
         Button(onClick = {
-            if (!allCorePermissionsGranted(context)) permissionRefresh++
-            else { val i = Intent(context, SnapdragonMonitorService::class.java); if (Build.VERSION.SDK_INT >= 26) context.startForegroundService(i) else context.startService(i) }
-        }, modifier = Modifier.fillMaxWidth().height(52.dp), shape = RoundedCornerShape(18.dp)) { Icon(Icons.Rounded.PlayArrow, null); Spacer(Modifier.width(8.dp)); Text(if (!allCorePermissionsGranted(context)) "Önce izinleri tamamla" else "Otomatik algılamayı başlat", fontWeight = FontWeight.Bold) }
+            when {
+                !hasUsageAccess(context) -> context.startActivity(android.content.Intent(android.provider.Settings.ACTION_USAGE_ACCESS_SETTINGS))
+                !android.provider.Settings.canDrawOverlays(context) -> context.startActivity(android.content.Intent(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION, android.net.Uri.parse("package:" + context.packageName)))
+                else -> { val i = android.content.Intent(context, SnapdragonMonitorService::class.java); if (Build.VERSION.SDK_INT >= 26) context.startForegroundService(i) else context.startService(i) }
+            }
+        }, modifier = Modifier.fillMaxWidth().height(52.dp), shape = RoundedCornerShape(18.dp)) { Icon(Icons.Rounded.PlayArrow, null); Spacer(Modifier.width(8.dp)); Text(if (!usageGranted) "Kullanım erişimini ver" else if (!overlayGranted) "Panel iznini ver" else "Otomatik algılamayı başlat", fontWeight = FontWeight.Bold) }
         Text("SEÇİLİ UYGULAMALAR · ${selected.size}", color = Cyan, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.2.sp)
         apps.forEach { app ->
             val packageName = app.packageName

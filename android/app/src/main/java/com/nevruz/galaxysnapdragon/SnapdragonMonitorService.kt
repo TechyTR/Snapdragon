@@ -62,13 +62,13 @@ class SnapdragonMonitorService : Service() {
                 lastEventTime = now
                 val selected = getSharedPreferences("snapdragon_settings", MODE_PRIVATE).getStringSet("selected_apps", emptySet()) ?: emptySet()
                 val target = activePackage?.takeIf { it in selected && it != packageName }
-                if (target != null && !paused) {
+                if (target != null) {
                     if (shownForPackage != target) {
                         shownForPackage = target
                         val label = try { packageManager.getApplicationLabel(packageManager.getApplicationInfo(target, 0)).toString() } catch (_: Exception) { "Oyun" }
                         (getSystemService(NOTIFICATION_SERVICE) as NotificationManager).notify(4108, buildGameNotification("Snapdragon Mode Enabled · " + label))
                     }
-                    if (Settings.canDrawOverlays(this@SnapdragonMonitorService)) showOverlay()
+                    if (!paused && Settings.canDrawOverlays(this@SnapdragonMonitorService)) showOverlay()
                 } else {
                     shownForPackage = null
                     removeOverlay()
@@ -133,7 +133,7 @@ class SnapdragonMonitorService : Service() {
             }
             actions.addView(button, LinearLayout.LayoutParams(0, dp(44), 1f).apply { setMargins(dp(2), 0, dp(2), 0) })
         }
-        action("Oyun", { paused = !paused; removeOverlay() })
+        action("Duraklat", { paused = !paused; subtitle.text = if (paused) "DURAKLATILDI" else "OYUN ARAÇLARI"; actions.getChildAt(0).let { (it as? Button)?.text = if (paused) "Devam" else "Duraklat" } })
         action("Gizle", { removeOverlay() })
         action("Durdur", { stopSelf() })
         detail.addView(actions)
