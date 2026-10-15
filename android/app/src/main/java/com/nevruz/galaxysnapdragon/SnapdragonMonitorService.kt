@@ -64,7 +64,7 @@ class SnapdragonMonitorService : Service() {
                         shownForPackage = target
                         val label = try { packageManager.getApplicationLabel(packageManager.getApplicationInfo(target, 0)).toString() } catch (_: Exception) { "Oyun" }
                         val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-                        nm.notify(4108, buildNotification("Snapdragon Mode Enabled · $label", ongoing = false))
+                        nm.notify(4108, buildGameNotification("Snapdragon Mode Enabled · $label"))
                     }
                     if (Settings.canDrawOverlays(this@SnapdragonMonitorService)) showOverlay()
                 } else {
@@ -86,6 +86,15 @@ class SnapdragonMonitorService : Service() {
             .build()
     }
 
+    private fun buildGameNotification(text: String): Notification {
+        val builder = if (Build.VERSION.SDK_INT >= 26) Notification.Builder(this, "snapdragon_game") else @Suppress("DEPRECATION") Notification.Builder(this)
+        return builder.setSmallIcon(android.R.drawable.ic_media_play)
+            .setContentTitle("Snapdragon Mode Enabled")
+            .setContentText(text)
+            .setAutoCancel(true)
+            .setOnlyAlertOnce(true)
+            .build()
+    }
     private fun createChannel() {
         if (Build.VERSION.SDK_INT >= 26) {
             val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
