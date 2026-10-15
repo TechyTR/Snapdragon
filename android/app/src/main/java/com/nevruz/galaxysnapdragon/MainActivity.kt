@@ -70,7 +70,8 @@ private fun SnapdragonApp(context: Context) {
         when (page) {
             "panel" -> PanelPage({ page = "home" }, gameMode, { gameMode = it }, focusMode, { focusMode = it }, touchBoost, { touchBoost = it })
             "device" -> DevicePage(context) { page = "home" }
-            else -> HomePage(context, gameMode, { gameMode = it }, focusMode, { focusMode = it }, touchBoost, { touchBoost = it }, { page = "panel" }, { page = "device" })
+            "apps" -> AppSelectionPage(context) { page = "home" }
+            else -> HomePage(context, gameMode, { gameMode = it }, focusMode, { focusMode = it }, touchBoost, { touchBoost = it }, { page = "panel" }, { page = "device" }, { page = "apps" })
         }
     }
 }
@@ -80,7 +81,7 @@ private fun HomePage(
     context: Context, gameMode: Boolean, onGameMode: (Boolean) -> Unit,
     focusMode: Boolean, onFocusMode: (Boolean) -> Unit,
     touchBoost: Boolean, onTouchBoost: (Boolean) -> Unit,
-    onOpenPanel: () -> Unit, onOpenDevice: () -> Unit
+    onOpenPanel: () -> Unit, onOpenDevice: () -> Unit, onOpenApps: () -> Unit
 ) {
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 20.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
@@ -112,6 +113,7 @@ private fun HomePage(
         SectionLabel("OYUN MERKEZİ")
         ActionCard("Yüzen oyun paneli", "Hızlı araçlar, oyun kısayolları ve kontrol merkezi", Icons.Rounded.Gamepad, Cyan, onOpenPanel)
         ActionCard("Cihaz laboratuvarı", "Bellek, işlemci ve Android bilgilerini incele", Icons.Rounded.Memory, Purple, onOpenDevice)
+        ActionCard("Uygulama tetikleyicileri", "Panelin çalışacağı oyunları ve uygulamaları seç", Icons.Rounded.Apps, Blue, onOpenApps)
         Text("Arayüz önizlemesi • Performans ölçümleri ve sistem araçları geliştirme aşamasında", Modifier.fillMaxWidth().padding(top = 2.dp, bottom = 12.dp), textAlign = TextAlign.Center, fontSize = 10.sp, lineHeight = 15.sp, color = Color(0xFF64748B))
     }
 }
@@ -336,4 +338,50 @@ private fun GlowIcon(icon: ImageVector, modifier: Modifier) {
     Box(modifier.shadow(18.dp, RoundedCornerShape(19.dp), ambientColor = Cyan.copy(alpha = pulse * 0.4f), spotColor = Cyan.copy(alpha = pulse * 0.25f)).background(Brush.linearGradient(listOf(Cyan.copy(alpha = 0.22f), Blue.copy(alpha = 0.16f))), RoundedCornerShape(19.dp)).border(1.dp, Cyan.copy(alpha = 0.45f), RoundedCornerShape(19.dp)), contentAlignment = Alignment.Center) {
         Icon(icon, null, tint = Cyan, modifier = Modifier.size(28.dp))
     }
+}
+
+@Composable
+private fun AppSelectionPage(context: Context, onBack: () -> Unit) {
+    val prefs = remember { context.getSharedPreferences("snapdragon_settings", Context.MODE_PRIVATE) }
+    var selected by remember { mutableStateOf(prefs.getStringSet("selected_apps", emptySet())?.toSet() ?: emptySet()) }
+    val apps = remember {
+        val intent = android.content.Intent(android.content.Intent.ACTION_MAIN).addCategory(android.content.Intent.CATEGORY_LAUNCHER)
+        context.packageManager.queryIntentActivities(intent, 0).map { it.activityInfo }.filter { it.packageName != context.packageName }.distinctBy { it.packageName }.sortedBy { it.loadLabel(context.packageManager).toString().lowercase() }
+    }
+    val usageGranted = remember { hasUsageAccess(context) }
+    val overlayGranted = remember { android.provider.Settings.canDrawOverlays(context) }
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        PageHeader("Uygulama seçimi", "OTOMATİK OYUN TETİKLEYİCİSİ", onBack)
+        Text("Yalnızca seçtiğin uygulamalar öndeyken Snapdragon bildirimi ve panel tetiklenir.", color = Muted, fontSize = 12.sp, lineHeight = 18.sp)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) { StatusChip("Kullanım erişimi", usageGranted); StatusChip("Üstte göster", overlayGranted) }
+        Button(onClick = {
+            when {
+                !usageGranted -> context.startActivity(android.content.Intent(android.provider.Settings.ACTION_USAGE_ACCESS_SETTINGS))
+                !overlayGranted -> context.startActivity(android.content.Intent(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION, android.net.Uri.parse("package:" + context.packageName)))
+                else -> { val i = android.content.Intent(context, SnapdragonMonitorService::class.java); if (Build.VERSION.SDK_INT >= 26) context.startForegroundService(i) else context.startService(i) }
+            }
+        }, modifier = Modifier.fillMaxWidth().height(52.dp), shape = RoundedCornerShape(18.dp)) { Icon(Icons.Rounded.PlayArrow, null); Spacer(Modifier.width(8.dp)); Text(if (!usageGranted) "Kullanım erişimini ver" else if (!overlayGranted) "Panel iznini ver" else "Otomatik algılamayı başlat", fontWeight = FontWeight.Bold) }
+        Text("SEÇİLİ UYGULAMALAR · ${selected.size}", color = Cyan, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.2.sp)
+        apps.forEach { app ->
+            val packageName = app.packageName
+            val label = app.loadLabel(context.packageManager).toString()
+            Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(Panel).border(1.dp, Color(0xFF26364D), RoundedCornerShape(18.dp)).clickable { selected = if (packageName in selected) selected - packageName else selected + packageName; prefs.edit().putStringSet("selected_apps", selected).apply() }.padding(horizontal = 14.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) { Text(label, color = White, fontWeight = FontWeight.SemiBold, fontSize = 13.sp); Text(packageName, color = Muted, fontSize = 9.sp, maxLines = 1) }
+                Checkbox(checked = packageName in selected, onCheckedChange = { selected = if (it) selected + packageName else selected - packageName; prefs.edit().putStringSet("selected_apps", selected).apply() })
+            }
+        }
+        Text("Android, kullanım erişimi ve diğer uygulamaların üzerinde gösterme izinlerini senden ister. Algılama açıkken Snapdragon servisi bildirim alanında görünür.", color = Muted, fontSize = 10.sp, lineHeight = 15.sp)
+    }
+}
+
+@Composable
+private fun StatusChip(title: String, enabled: Boolean) {
+    val tint = if (enabled) Cyan else Purple
+    Row(Modifier.clip(CircleShape).background(tint.copy(alpha = 0.12f)).border(1.dp, tint.copy(alpha = 0.35f), CircleShape).padding(horizontal = 10.dp, vertical = 7.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) { Box(Modifier.size(6.dp).background(tint, CircleShape)); Text(title + if (enabled) " hazır" else " gerekli", color = tint, fontSize = 9.sp, fontWeight = FontWeight.Bold) }
+}
+
+private fun hasUsageAccess(context: Context): Boolean {
+    val ops = context.getSystemService(Context.APP_OPS_SERVICE) as android.app.AppOpsManager
+    val mode = if (Build.VERSION.SDK_INT >= 29) ops.unsafeCheckOpNoThrow("android:get_usage_stats", android.os.Process.myUid(), context.packageName) else { @Suppress("DEPRECATION") ops.checkOpNoThrow("android:get_usage_stats", android.os.Process.myUid(), context.packageName) }
+    return mode == android.app.AppOpsManager.MODE_ALLOWED
 }
