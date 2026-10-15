@@ -34,14 +34,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-private val Night = Color(0xFF070A12)
-private val Panel = Color(0xFF111827)
-private val PanelBright = Color(0xFF172238)
-private val Cyan = Color(0xFF42E8FF)
-private val Blue = Color(0xFF5277FF)
-private val Purple = Color(0xFFB16CFF)
-private val Muted = Color(0xFF93A4BE)
-private val White = Color(0xFFF3F7FF)
+private val Night = Color(0xFF090D14)
+private val Panel = Color(0xFF121923)
+private val PanelBright = Color(0xFF1A2432)
+private val Cyan = Color(0xFF69D7E8)
+private val Blue = Color(0xFF5A8FE8)
+private val Purple = Color(0xFF9A8DEB)
+private val Muted = Color(0xFF9AA9BB)
+private val White = Color(0xFFF1F5F9)
+private val AccentRed = Color(0xFFE35D5B)
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -88,36 +89,106 @@ private fun HomePage(
 ) {
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 20.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-            GlowIcon(Icons.Rounded.Bolt, Modifier.size(52.dp))
+            Box(Modifier.size(48.dp).clip(RoundedCornerShape(15.dp)).background(PanelBright).border(1.dp, Color(0xFF344253), RoundedCornerShape(15.dp)), contentAlignment = Alignment.Center) {
+                Icon(Icons.Rounded.Memory, null, tint = AccentRed, modifier = Modifier.size(27.dp))
+            }
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
-                Text("SNAPDRAGON", fontSize = 18.sp, fontWeight = FontWeight.Black, letterSpacing = 2.sp, color = White)
-                Text("GAMING CONTROL CENTER", fontSize = 9.sp, letterSpacing = 1.6.sp, color = Muted)
+                Text("Snapdragon", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = White)
+                Text("DEVICE CONTROL CENTER", fontSize = 9.sp, letterSpacing = 1.4.sp, color = Muted)
             }
-            Box(Modifier.clip(CircleShape).background(Color(0xFF15333A)).border(1.dp, Color(0x5542E8FF), CircleShape).padding(horizontal = 12.dp, vertical = 7.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Box(Modifier.size(6.dp).background(Cyan, CircleShape))
-                    Text("BETA", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Cyan)
-                }
+            Box(Modifier.clip(CircleShape).background(Color(0xFF202A35)).border(1.dp, Color(0xFF394858), CircleShape).padding(horizontal = 11.dp, vertical = 7.dp)) {
+                Text("FAN-MADE", fontSize = 8.sp, fontWeight = FontWeight.Bold, color = Muted, letterSpacing = 0.8.sp)
             }
         }
-        HeroCard(onOpenPanel)
-        SectionLabel("HIZLI KONTROLLER")
+        ProcessorOverview(onOpenDevice, onOpenPanel)
+        SectionLabel("KISAYOLLAR")
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
             QuickToggle("Oyun modu", Icons.Rounded.Gamepad, gameMode, Modifier.weight(1f), onGameMode)
             QuickToggle("Odak modu", Icons.Rounded.Vibration, focusMode, Modifier.weight(1f), onFocusMode)
             QuickToggle("Dokunma+", Icons.Rounded.Speed, touchBoost, Modifier.weight(1f), onTouchBoost)
         }
-        SectionLabel("SİSTEM ÖZETİ")
+        SectionLabel("SİSTEM DURUMU")
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-            MetricCard("ANDROID", Build.VERSION.RELEASE ?: "?", "Sürüm", Icons.Rounded.Memory, Modifier.weight(1f))
-            MetricCard("API ${Build.VERSION.SDK_INT}", Build.MANUFACTURER.orEmpty().uppercase().ifBlank { "CİHAZ" }, "Platform", Icons.Rounded.MonitorHeart, Modifier.weight(1f))
+            MetricCard("ANDROID", "Android ${Build.VERSION.RELEASE ?: "?"}", "İşletim sistemi", Icons.Rounded.Smartphone, Modifier.weight(1f))
+            MetricCard("API SEVİYESİ", Build.VERSION.SDK_INT.toString(), "Android SDK", Icons.Rounded.Tune, Modifier.weight(1f))
         }
-        SectionLabel("OYUN MERKEZİ")
+        SectionLabel("ARAÇLAR")
         ActionCard("Yüzen oyun paneli", "Hızlı araçlar, oyun kısayolları ve kontrol merkezi", Icons.Rounded.Gamepad, Cyan, onOpenPanel)
         ActionCard("Cihaz laboratuvarı", "Bellek, işlemci ve Android bilgilerini incele", Icons.Rounded.Memory, Purple, onOpenDevice)
         ActionCard("Uygulama tetikleyicileri", "Panelin çalışacağı oyunları ve uygulamaları seç", Icons.Rounded.Apps, Blue, onOpenApps)
-        Text("Arayüz önizlemesi • Performans ölçümleri ve sistem araçları geliştirme aşamasında", Modifier.fillMaxWidth().padding(top = 2.dp, bottom = 12.dp), textAlign = TextAlign.Center, fontSize = 10.sp, lineHeight = 15.sp, color = Color(0xFF64748B))
+        Text("Snapdragon, Qualcomm Technologies, Inc. markasıdır. Bu uygulama bağımsız bir hayran projesidir; Qualcomm tarafından yayımlanmamış veya onaylanmamıştır. Bazı kontrol seçenekleri henüz görsel önizlemedir.", Modifier.fillMaxWidth().padding(top = 2.dp, bottom = 12.dp), textAlign = TextAlign.Start, fontSize = 10.sp, lineHeight = 15.sp, color = Color(0xFF728196))
+    }
+}
+
+private fun socModel(): String {
+    val raw = if (Build.VERSION.SDK_INT >= 31) Build.SOC_MODEL.orEmpty().trim() else ""
+    val upper = raw.uppercase()
+    return when {
+        upper.contains("SM8750") -> "Snapdragon 8 Elite"
+        upper.contains("SM8650") -> "Snapdragon 8 Gen 3"
+        upper.contains("SM8550") -> "Snapdragon 8 Gen 2"
+        upper.contains("SM8475") -> "Snapdragon 8+ Gen 1"
+        upper.contains("SM8450") -> "Snapdragon 8 Gen 1"
+        upper.contains("SM8350") -> "Snapdragon 888"
+        upper.contains("SM8250") -> "Snapdragon 865"
+        upper.contains("SM8150") -> "Snapdragon 855"
+        upper.contains("SM7675") -> "Snapdragon 7+ Gen 3"
+        upper.contains("SM7550") -> "Snapdragon 7 Gen 3"
+        upper.contains("SM7435") -> "Snapdragon 782G"
+        upper.contains("SM6450") -> "Snapdragon 6 Gen 1"
+        upper.contains("SM6375") -> "Snapdragon 695"
+        upper.contains("SM4350") -> "Snapdragon 480"
+        raw.isNotBlank() -> raw
+        Build.HARDWARE.contains("qcom", ignoreCase = true) -> "Qualcomm Snapdragon"
+        else -> "Model tespit edilemedi"
+    }
+}
+
+@Composable
+private fun ProcessorOverview(onOpenDevice: () -> Unit, onOpenPanel: () -> Unit) {
+    val chip = socModel()
+    val isQualcomm = chip.contains("Snapdragon", true) || chip.contains("Qualcomm", true)
+    Card(Modifier.fillMaxWidth().clickable(onClick = onOpenDevice), shape = RoundedCornerShape(26.dp), colors = CardDefaults.cardColors(containerColor = Panel)) {
+        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(15.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("İŞLEMCİ / SOC", color = Muted, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.5.sp)
+                    Spacer(Modifier.height(5.dp))
+                    Text(chip, color = White, fontSize = 23.sp, fontWeight = FontWeight.Bold, lineHeight = 28.sp)
+                    Text(Build.MODEL.orEmpty(), color = Muted, fontSize = 12.sp)
+                }
+                Box(Modifier.size(64.dp).clip(RoundedCornerShape(19.dp)).background(Color(0xFF25232A)).border(1.dp, Color(0xFF4A3438), RoundedCornerShape(19.dp)), contentAlignment = Alignment.Center) {
+                    Icon(Icons.Rounded.Memory, null, tint = AccentRed, modifier = Modifier.size(34.dp))
+                }
+            }
+            HorizontalDivider(color = Color(0xFF2B3543))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                SystemTag(if (isQualcomm) "QUALCOMM PLATFORM" else "SOC BİLGİSİ", isQualcomm)
+                SystemTag("ANDROID ${Build.VERSION.RELEASE ?: "?"}", false)
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedButton(onClick = onOpenDevice, modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp), border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF3B4859)), colors = ButtonDefaults.outlinedButtonColors(contentColor = White)) {
+                    Icon(Icons.Rounded.Tune, null, modifier = Modifier.size(17.dp))
+                    Spacer(Modifier.width(7.dp))
+                    Text("Cihaz ayrıntıları", fontSize = 11.sp)
+                }
+                Button(onClick = onOpenPanel, modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp), colors = ButtonDefaults.buttonColors(containerColor = AccentRed, contentColor = White)) {
+                    Icon(Icons.Rounded.Gamepad, null, modifier = Modifier.size(17.dp))
+                    Spacer(Modifier.width(7.dp))
+                    Text("Oyun araçları", fontSize = 11.sp)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SystemTag(text: String, active: Boolean) {
+    val color = if (active) Color(0xFF75D6B0) else Muted
+    Row(Modifier.clip(CircleShape).background(color.copy(alpha = 0.09f)).border(1.dp, color.copy(alpha = 0.25f), CircleShape).padding(horizontal = 9.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+        Box(Modifier.size(5.dp).background(color, CircleShape))
+        Text(text, color = color, fontSize = 8.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.4.sp)
     }
 }
 
@@ -279,6 +350,8 @@ private fun DevicePage(context: Context, onBack: () -> Unit) {
         }
         InfoRow("Üretici", Build.MANUFACTURER.orEmpty())
         InfoRow("Cihaz kod adı", Build.DEVICE.orEmpty())
+        InfoRow("Tespit edilen SoC", socModel())
+        InfoRow("SoC üreticisi", if (Build.VERSION.SDK_INT >= 31) Build.SOC_MANUFACTURER.orEmpty() else "Android API bilgisi yok")
         InfoRow("İşlemci donanımı", Build.HARDWARE.orEmpty())
         InfoRow("Ürün", Build.PRODUCT.orEmpty())
         InfoRow("Android sürümü", Build.VERSION.RELEASE.orEmpty())
