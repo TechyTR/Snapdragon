@@ -356,8 +356,8 @@ private fun AppSelectionPage(context: Context, onBack: () -> Unit) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) { StatusChip("Kullanım erişimi", usageGranted); StatusChip("Üstte göster", overlayGranted) }
         Button(onClick = {
             when {
-                !usageGranted -> context.startActivity(android.content.Intent(android.provider.Settings.ACTION_USAGE_ACCESS_SETTINGS))
-                !overlayGranted -> context.startActivity(android.content.Intent(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION, android.net.Uri.parse("package:" + context.packageName)))
+                !hasUsageAccess(context) -> context.startActivity(android.content.Intent(android.provider.Settings.ACTION_USAGE_ACCESS_SETTINGS))
+                !android.provider.Settings.canDrawOverlays(context) -> context.startActivity(android.content.Intent(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION, android.net.Uri.parse("package:" + context.packageName)))
                 else -> { val i = android.content.Intent(context, SnapdragonMonitorService::class.java); if (Build.VERSION.SDK_INT >= 26) context.startForegroundService(i) else context.startService(i) }
             }
         }, modifier = Modifier.fillMaxWidth().height(52.dp), shape = RoundedCornerShape(18.dp)) { Icon(Icons.Rounded.PlayArrow, null); Spacer(Modifier.width(8.dp)); Text(if (!usageGranted) "Kullanım erişimini ver" else if (!overlayGranted) "Panel iznini ver" else "Otomatik algılamayı başlat", fontWeight = FontWeight.Bold) }
