@@ -124,7 +124,8 @@ class SnapdragonMonitorService : Service() {
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> { downX = event.rawX; downY = event.rawY; startX = params.x; startY = params.y; true }
                 MotionEvent.ACTION_MOVE -> { params.x = startX + (downX - event.rawX).toInt(); params.y = startY + (event.rawY - downY).toInt(); try { windowManager.updateViewLayout(view, params) } catch (_: Exception) {}; true }
-                else -> false
+                MotionEvent.ACTION_UP -> { if (kotlin.math.abs(event.rawX - downX) < 8f && kotlin.math.abs(event.rawY - downY) < 8f) view.performClick(); true }
+                else -> true
             }
         }
         try {
